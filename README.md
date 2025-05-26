@@ -8,7 +8,7 @@ A real-time Bitcoin price tracking application built with **Jetpack Compose** in
 
 -  Real-time BTC price updates from **CoinLayer API**
 -  7-day historical price chart fetched from **CoinGecko API**
--  Auto-refresh every 30 seconds (configurable)
+-  Auto-refresh every 60 seconds (configurable)
 -  Visual feedback using **Lottie animations** to indicate price rising or falling
 -  Smooth, responsive line graph with min/max markers
 -  Adaptive layout for portrait and landscape orientations
