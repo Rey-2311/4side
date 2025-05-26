@@ -1,29 +1,54 @@
 # Alarm App
 
-A simple Android Alarm application built with **Jetpack Compose** and **Kotlin**. Users can set a specific alarm time using a time picker, and the app will trigger a system-level alarm with a notification at the specified time—even when the device is idle.
+A modern Android alarm application built with **Jetpack Compose** in **Kotlin**. This app lets users set daily alarms, shows real-time clock updates, and sends notifications at the scheduled time—even if the app is closed or swiped away.
 
 ---
 
 ## Features
 
--  Real-time digital clock
--  TimePicker dialog for selecting alarm time
--  Alarm notifications using `AlarmManager`
--  Custom notification with title and message
--  Supports `setExactAndAllowWhileIdle` for idle devices
--  Permission handling for Android 13+ (`POST_NOTIFICATIONS`, `SCHEDULE_EXACT_ALARM`)
+-  Live display of current time
+-  Schedule alarms using a time picker
+-  Alarm notification appears at the selected time
+-  Works while idle or after app is closed/swiped
+-  Requests necessary permissions (e.g., **Post Notifications**, **Exact Alarms**) dynamically
 
 ---
 
-## Tech Stack
+##  App Workflow
 
-- **Kotlin**
-- **Jetpack Compose**
-- **AlarmManager**
-- **PendingIntent**
-- **NotificationCompat**
-- **BroadcastReceiver**
-- **TimePickerDialog**
+1. **Real-Time Clock Display**  
+   Updates every second to show current time on screen.
+
+2. **Alarm Setup**  
+   Opens a time picker dialog for users to select alarm time.
+
+3. **Notification Trigger**  
+   At the scheduled time, the app wakes and shows a notification.
+
+4. **Runs in Background**  
+   Uses `AlarmManager.setExactAndAllowWhileIdle()` and `BroadcastReceiver` to function even after the app is swiped away or the device is idle.
+
+---
+
+##  Challenges Faced
+
+- Understanding and handling **runtime permissions** in Android 13+:
+  - `POST_NOTIFICATIONS`
+  - `SCHEDULE_EXACT_ALARM`
+- Learning how to **schedule alarms** with `AlarmManager` that persist and trigger even when:
+  - The app is closed
+  - The device enters Doze mode
+- Managing backward compatibility and device-specific behavior for alarm scheduling
+
+---
+
+##  Tech Stack
+
+-  **Kotlin**
+-  **Jetpack Compose**
+-  **AlarmManager**, **PendingIntent**, **BroadcastReceiver**
+-  **Material 3**
+-  **Android Studio**
 
 ---
 
