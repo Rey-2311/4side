@@ -1,0 +1,426 @@
+package com.example.quiz
+
+import android.content.Context
+import android.R.bool
+import com.example.quiz.R
+import android.annotation.SuppressLint
+import android.os.Bundle
+import android.util.Log
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
+import com.example.quiz.ui.theme.QuizTheme
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import kotlinx.serialization.Serializable
+import androidx.compose.ui.platform.LocalContext
+import com.example.quiz.CircleImageButton
+import com.example.quiz.FuncButton
+import com.example.quiz.utils.mergeAiQuestionsIntoJson
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import java.io.File
+import java.io.IOException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.*
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import java.util.concurrent.TimeUnit
+
+class MainActivity : ComponentActivity() {
+    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContent {
+            QuizTheme {
+                Scaffold(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Quiz()
+                }
+            }
+        }
+    }
+}
+
+@Serializable
+data class QuizSet(
+    val id: Int,
+    val questions: List<Question>
+)
+
+@Serializable
+data class Question(
+    val number: Int,
+    val text: String,
+    val correctAnswer: Int
+)
+
+fun loadQuizData(context: Context): List<QuizSet> {
+    val file = File(context.filesDir, "questions.json")
+    val jsonString = when {
+        file.exists() -> file.readText()
+        else -> {
+            try {
+                context.resources.openRawResource(R.raw.questions)
+                    .bufferedReader().use { it.readText() }
+            } catch (_: IOException) {
+                return emptyList()
+            }
+        }
+    }
+    return Json { ignoreUnknownKeys = true }
+        .decodeFromString(jsonString)
+}
+
+
+@Composable
+fun Quiz() {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val quizSetsState = remember { mutableStateOf(loadQuizData(context)) }
+    val quizSets      = quizSetsState.value
+    val progressBar = remember { mutableStateListOf(0, 0, 0, 0) }
+    var selectedSetId by rememberSaveable { mutableStateOf<Int?>(null) }
+    var questionIndex  by remember { mutableStateOf(0) }
+    var showResult     by remember { mutableStateOf(false) }
+    var userAnswer     by remember { mutableStateOf<Int?>(null) }
+    var hasReachedEnd  by remember { mutableStateOf(false) }
+    var overlayVisible by remember { mutableStateOf(true) }
+    val currentSet = quizSets.firstOrNull { it.id == selectedSetId }
+    var layerActive by rememberSaveable { mutableStateOf(true) }
+    var wrongAnswer by remember { mutableStateOf(0) }
+    val prefs = remember { context.getSharedPreferences("my_prefs", Context.MODE_PRIVATE) }
+    var inputText by rememberSaveable { mutableStateOf(prefs.getString("user_input", "") ?: "") }
+    var returnSaveProgress by remember { mutableStateOf(false) }
+
+    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        if (layerActive) Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight()
+                .background(MaterialTheme.colorScheme.primaryContainer)
+                .padding(16.dp)
+                .zIndex(10f),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TextField(
+                value = inputText,
+                onValueChange = {
+                    inputText = it
+                    prefs.edit().putString("user_input", it).apply()
+                },
+
+                placeholder = { Text("Enter name…") },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(56.dp),
+                singleLine = true,
+                shape = RoundedCornerShape(8.dp),
+                enabled = layerActive
+            )
+            Spacer(Modifier.width(8.dp))
+            Button(
+                onClick = {
+                    val filename = "$inputText.txt"
+                    val file = File(context.filesDir, filename)
+
+                    val progress = if (file.exists()) {
+                        loadUserProgress(context, inputText)
+                    } else {
+                        val defaultProgress = listOf(0, 0, 0, 0)
+                        saveUserProgress(context, inputText, defaultProgress)
+                        defaultProgress
+                    }
+                    progressBar.clear()
+                    progressBar.addAll(progress)
+
+                    layerActive = false
+                    overlayVisible = true
+                    selectedSetId = null
+                    showResult = false
+//                    scope.launch {
+//                        generateQuestion(context)
+//                        // 3) THEN reload from the updated file:
+//                        quizSetsState.value = loadQuizData(context)
+//                        }
+
+                },
+                modifier = Modifier.height(56.dp) ,
+                        enabled = layerActive
+            ) {
+                Text("Submit")
+            }
+        }
+        if (overlayVisible) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(Color.White.copy(alpha = .1f))
+                    .zIndex(1f)
+            )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 120.dp),
+                verticalArrangement = Arrangement.spacedBy(50.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ){
+                listOf(1, 2, 3, 4).forEach { setId ->
+                    val borderColor = if (setId == 4) {
+                        Color.Gray
+                    } else {
+                        when (progressBar.getOrElse(setId - 1) { 0 }) {
+                            1 -> Color.Red
+                            2 -> Color.Green
+                            else -> Color.Gray
+                        }
+                    }
+                        CircleImageButton(
+                            resId = when (setId) {
+                                1 -> R.drawable.s1
+                                2 -> R.drawable.s2
+                                3 -> R.drawable.s3
+                                else -> R.drawable.s5
+                            },
+                            borderColor = borderColor,
+                            onClick = {
+                                overlayVisible = false
+                                selectedSetId = setId
+
+                            }
+                    )
+                }
+            }
+        }
+
+        if (!overlayVisible) {
+            FuncButton(
+                label = "Return",
+                Modifier
+                    .align(Alignment.TopStart)
+                    .offset(x = 16.dp, y = 32.dp)
+                    .zIndex(4f),
+                onClick = {
+                    overlayVisible = true
+                    selectedSetId = null
+                    questionIndex  = 0
+                    hasReachedEnd  = false
+                    showResult     = false
+                    userAnswer     = null
+                    wrongAnswer = 0
+                }
+
+            )
+
+        }
+        if (currentSet == null)
+            FuncButton(
+                label = "Logout",
+                Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = -16.dp, y = 32.dp)
+                    .zIndex(4f),
+                onClick = {
+                    layerActive = true
+                    overlayVisible = true
+                    selectedSetId = null
+                    questionIndex  = 0
+                    hasReachedEnd  = false
+                    showResult     = false
+                    userAnswer     = null
+                    wrongAnswer = 0
+                    progressBar.clear()
+                    progressBar.addAll(listOf(0, 0, 0, 0))
+                }
+            )
+        if (!overlayVisible && currentSet != null) {
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .padding(top = 120.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                if (!hasReachedEnd) {
+                    val question = currentSet.questions.getOrNull(questionIndex)
+                    if (question != null) {
+                        Text(
+                            text = "Question ${question.number}:\n${question.text}",
+                            modifier = Modifier.padding(24.dp),
+                            fontSize = 20.sp
+                        )
+
+                        if (!showResult) {
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                FuncButton("Yes") {
+                                    userAnswer = 0
+                                    showResult = true
+                                }
+                                FuncButton("No") {
+                                    userAnswer = 1
+                                    showResult = true
+                                }
+                            }
+                        } else {
+                            ResultAnimation(
+                                visible = true,
+                                correct = (userAnswer == question.correctAnswer),
+                                Modifier.size(200.dp).zIndex(5f)
+                            )
+                            Spacer(Modifier.height(16.dp))
+
+                            FuncButton("Next") {
+                                if (userAnswer != question.correctAnswer)
+                                {
+                                    wrongAnswer += 1
+                                }
+                                questionIndex++
+                                showResult = false
+                                userAnswer = null
+                                if (questionIndex >= currentSet.questions.size) {
+                                    hasReachedEnd = true
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    saveUserProgress(context, inputText, progressBar)
+                    val setIndex = (selectedSetId ?: 1) - 1
+                    Text(
+                        text = "The End",
+                        fontSize = 24.sp,
+                        modifier = Modifier.padding(24.dp)
+                    )
+                    if (wrongAnswer == 0)
+                    {
+                        Text(
+                            text = "Well Done",
+                            fontSize = 24.sp,
+                            modifier = Modifier.padding(24.dp)
+                        )
+                        progressBar[setIndex] = 2
+                    }
+                    else
+                    {
+                        Text(
+                            text = "$wrongAnswer Incorrect Answer/s",
+                            fontSize = 24.sp,
+                            modifier = Modifier.padding(24.dp)
+                        )
+                        progressBar[setIndex] = 1
+                    }
+                }
+            }
+        }
+    }
+}
+
+fun saveUserProgress(context: Context, name: String, progress: List<Int>) {
+    val filename = "$name.txt"
+    val fixed = (progress + List(4 - progress.size) { 0 }).take(4)
+    context.openFileOutput(filename, Context.MODE_PRIVATE).use {
+        it.write(fixed.joinToString(",").toByteArray())
+    }
+}
+
+
+
+fun loadUserProgress(context: Context, name: String): List<Int> {
+    val filename = "$name.txt"
+    val raw = try {
+        context.openFileInput(filename).bufferedReader().use { it.readText() }
+    } catch (_: Exception) { "" }
+
+    val numbers = raw.split(",").mapNotNull { it.toIntOrNull() }
+    return (numbers + List(4 - numbers.size) { 0 }).take(4)
+}
+
+
+
+suspend fun generateQuestion(context: Context): String =
+    withContext(Dispatchers.IO) {
+        val API_KEY = "68feb1eb-6299-4a3a-b89f-919f77c23e81"
+        val client = OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(2, TimeUnit.MINUTES)
+            .callTimeout(2, TimeUnit.MINUTES)
+            .build()
+
+        val prompt = """
+Generate 5 yes/no questions for grade 5 math, with 3 correct (0) and 2 incorrect (1).. Output exactly one JSON object in this format, and nothing else (no explanation, no commentary):
+
+{
+  "id": 4,
+  "questions": [
+    { "number": 1, "text": "…", "correctAnswer": 0 },
+    { "number": 2, "text": "…", "correctAnswer": 0 },
+    { "number": 3, "text": "…", "correctAnswer": 0 },
+    { "number": 4, "text": "…", "correctAnswer": 0 },
+    { "number": 5, "text": "…", "correctAnswer": 0 }
+  ]
+}
+""".trimIndent()
+
+        val payload = buildJsonObject {
+    put("model", "jamba-large")
+    putJsonArray("messages") {
+        addJsonObject {
+            put("role", "user")
+            put("content", prompt)
+        }
+    }
+    put("max_tokens", 300)
+    put("temperature", 0.4) 
+}.toString()
+
+        val request = Request.Builder()
+            .url("https://api.ai21.com/studio/v1/chat/completions")
+            .addHeader("Authorization", "Bearer $API_KEY")
+            .addHeader("Content-Type", "application/json")
+            .post(payload.toRequestBody("application/json".toMediaType()))
+            .build()
+
+        client.newCall(request).execute().use { resp ->
+            if (!resp.isSuccessful) throw Exception("AI21 failed: HTTP ${resp.code}")
+
+            val body   = resp.body!!.string()
+            val root   = Json.parseToJsonElement(body).jsonObject
+            val choice = root["choices"]!!.jsonArray[0].jsonObject
+
+            val aiJson = choice["message"]!!
+                .jsonObject["content"]!!
+                .jsonPrimitive.content.trim()
+
+            mergeAiQuestionsIntoJson(context, aiJson)
+            return@withContext aiJson
+        }
+
+    }
