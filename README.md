@@ -30,3 +30,6 @@ A simple Android Alarm application built with **Jetpack Compose** and **Kotlin**
 ## Screenshot
 
 ![image](https://github.com/user-attachments/assets/ad962068-9bf0-4fda-bcd6-9303825b21dd)
+
+![image](https://github.com/user-attachments/assets/2b8beec8-a2f5-41a5-a1c0-eff174e5b65a)
+
