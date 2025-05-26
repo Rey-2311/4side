@@ -1,6 +1,6 @@
 # Calculator App
 
-A simple yet functional calculator application built using **Jetpack Compose** in **Kotlin**. This project showcases modern Android development practices, including declarative UI design, reactive state management, and intuitive user interaction.
+A simple functional calculator application built using **Jetpack Compose** in **Kotlin**. This project showcases modern Android development practices, including declarative UI design, reactive state management, and intuitive user interaction.
 
 ---
 
