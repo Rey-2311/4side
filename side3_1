@@ -163,11 +163,10 @@ fun Quiz() {
                     overlayVisible = true
                     selectedSetId = null
                     showResult = false
-//                    scope.launch {
-//                        generateQuestion(context)
-//                        // 3) THEN reload from the updated file:
-//                        quizSetsState.value = loadQuizData(context)
-//                        }
+                    scope.launch {
+                        generateQuestion(context)
+                        quizSetsState.value = loadQuizData(context)
+                        }
 
                 },
                 modifier = Modifier.height(56.dp) ,
@@ -398,7 +397,7 @@ Generate 5 yes/no questions for grade 5 math, with 3 correct (0) and 2 incorrect
         }
     }
     put("max_tokens", 300)
-    put("temperature", 0.4) 
+    put("temperature", 0.4)
 }.toString()
 
         val request = Request.Builder()
