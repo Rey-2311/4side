@@ -21,7 +21,3 @@ A simple calculator application built with **Jetpack Compose** in **Kotlin**. Th
 - **Jetpack Compose**
 - **Material 3**
 - **Android Studio**
-
-## Package Structure
-
-```kotlin
