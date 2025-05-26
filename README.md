@@ -1,6 +1,6 @@
 # Alarm App
 
-A modern Android alarm application built with **Jetpack Compose** in **Kotlin**. This app lets users set daily alarms, shows real-time clock updates, and sends notifications at the scheduled time—even if the app is closed or swiped away.
+An alarm application built with **Jetpack Compose** in **Kotlin**. This app lets users set daily alarms, shows real-time clock updates, and sends notifications at the scheduled time—even if the app is closed or swiped away.
 
 ---
 
@@ -14,7 +14,7 @@ A modern Android alarm application built with **Jetpack Compose** in **Kotlin**.
 
 ---
 
-##  App Workflow
+##  Development Process
 
 1. **Real-Time Clock Display**  
    Updates every second to show current time on screen.
@@ -30,15 +30,13 @@ A modern Android alarm application built with **Jetpack Compose** in **Kotlin**.
 
 ---
 
-##  Challenges Faced
+##  Challenges
 
 - Understanding and handling **runtime permissions** in Android 13+:
   - `POST_NOTIFICATIONS`
   - `SCHEDULE_EXACT_ALARM`
 - Learning how to **schedule alarms** with `AlarmManager` that persist and trigger even when:
   - The app is closed
-  - The device enters Doze mode
-- Managing backward compatibility and device-specific behavior for alarm scheduling
 
 ---
 
