@@ -28,7 +28,7 @@ This repository contains multiple Android apps developed using **Jetpack Compose
 
 ---
 
-## 🛠 Tech Stack
+##  Tech Stack
 
 - **Kotlin**
 - **Jetpack Compose**
