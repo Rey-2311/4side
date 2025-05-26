@@ -1,4 +1,4 @@
-#  Android Compose Projects
+#  Android Projects
 
 This repository contains multiple Android apps developed using **Jetpack Compose** and **Kotlin**. Each app is located in a separate branch and showcases different features, APIs, and UI techniques.
 
