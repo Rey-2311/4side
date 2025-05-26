@@ -33,7 +33,7 @@ A simple functional calculator application built using **Jetpack Compose** in **
 
 ---
 
-## Challenges Faced
+## Challenges
 
 - Learning to manipulate layout components such as `Box`, `Column`, and `Row`
 - Managing state consistently during operations and input sequences
