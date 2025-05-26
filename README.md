@@ -41,7 +41,7 @@ An interactive quiz application built with **Jetpack Compose** in **Kotlin** for
 
 ---
    
-## 🧗 Challenges Faced
+## 🧗 Challenges
 
 - Managing **UI visibility states** (e.g., quiz screen vs overlay vs result state)
 - Learning to use **AI21 Studio's Chat API** to:
