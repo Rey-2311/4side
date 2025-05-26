@@ -6,22 +6,22 @@ This repository contains multiple Android apps developed using **Jetpack Compose
 
 ##  Projects Overview
 
-### 1.  [Calculator App](https://github.com/yourusername/yourrepo/tree/calculator)
+### 1.  [Calculator App]
 - Basic arithmetic operations
 - Input/output display with operation history
 - Material 3 UI and state management
 
-### 2.  [Alarm App](https://github.com/yourusername/yourrepo/tree/alarm)
+### 2.  [Alarm App]
 - Set alarms using `AlarmManager`
 - Works even after swiping the app
 - Notification handling and user permission support
 
-### 3.  [Quiz App](https://github.com/yourusername/yourrepo/tree/quiz)
+### 3.  [Quiz App]
 - True/False quiz with Lottie animation
 - AI-generated questions via **AI21 Studio**
 - User progress tracking via internal storage
 
-### 4.  [Bitcoin Price Tracker](https://github.com/yourusername/yourrepo/tree/bitcoin)
+### 4.  [Bitcoin Price Tracker]
 - Live price tracking via **CoinLayer API**
 - 7-day graph from **CoinGecko API**
 - Lottie-based trend indicators and responsive charts
