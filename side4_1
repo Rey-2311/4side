@@ -80,16 +80,14 @@ fun LivePriceAndPredictionScreen(
     val progress by animateLottieCompositionAsState(composition, iterations = LottieConstants.IterateForever)
 
     LaunchedEffect(symbol) {
-        // 1) Prefill 7 days from CoinGecko
         val initial = runCatching { fetchLast7DaysPricesCoingecko() }.getOrNull()
         initial?.let {
             history.clear()
             history.addAll(it)
             latestPrice = it.lastOrNull()
-            lastPrice   = latestPrice   // ▶▶ set initial lastPrice
+            lastPrice   = latestPrice
         }
 
-        // 2) Live updates loop
         while (true) {
             loading = true
             runCatching {
@@ -116,29 +114,26 @@ fun LivePriceAndPredictionScreen(
             verticalArrangement = Arrangement.spacedBy(24.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            // symbol header
+
             Image(
                 painter = painterResource(R.drawable.btc_logo),
                 contentDescription = "$symbol logo",
                 modifier = Modifier.size(48.dp)
             )
 
-            // price + arrow indicator
             latestPrice?.let { price ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Price: %.2f USD".format(price))
                     Spacer(modifier = Modifier.width(8.dp))
                     LottieAnimation(composition, progress, modifier = Modifier.size(32.dp))
-                }  // ← closes Row
-            }    // ← closes let
+                }
+            }
 
 
-            // loading spinner
             if (loading) {
                 CircularProgressIndicator()
             }
 
-            // chart
             if (history.size >= 7) {
                 LineChart(
                     data = history.takeLast(7).map { it.toFloat() },
@@ -195,7 +190,7 @@ fun LineChart(
             val y = h - ((v - paddedMin) / paddedRange) * h
             Offset(x, y)
         }
-        // polyline
+
         for (i in 0 until points.size - 1) {
             drawLine(
                 color       = Color.Blue,
@@ -205,9 +200,8 @@ fun LineChart(
             )
         }
 
-        // draw points
         points.forEach { pt -> drawCircle(Color.Blue, pointRadius.toPx(), center = pt) }
-        // label max and min
+
         val paint = Paint().apply {
             color = android.graphics.Color.BLACK
             textSize = 24f
@@ -245,43 +239,3 @@ suspend fun fetchLast7DaysPricesCoingecko(): List<Double> =
             root["prices"]!!.jsonArray.map { it.jsonArray[1].jsonPrimitive.double }
         }
     }
-//suspend fun predictUpDownWithAI21(sequence: List<Double>): String =
-//    withContext(Dispatchers.IO) {
-//        val API_KEY = "68feb1eb-6299-4a3a-b89f-919f77c23e81"
-//        val client = OkHttpClient.Builder()
-//            .connectTimeout(30, TimeUnit.SECONDS)
-//            .writeTimeout(30, TimeUnit.SECONDS)
-//            .readTimeout(2, TimeUnit.MINUTES)
-//            .callTimeout(2, TimeUnit.MINUTES)
-//            .build()
-//
-//        val prompt = "Predict next number go up or down, Use only Up or Down to answer: ${sequence.joinToString(", ")} → ?"
-//
-//        val payload = buildJsonObject {
-//            put("model", "jamba-mini")
-//            putJsonArray("messages") {
-//                addJsonObject {
-//                    put("role", "user")
-//                    put("content", prompt)
-//                }
-//            }
-//            put("max_tokens", 100)
-//            put("temperature", 0.5)
-//        }.toString()
-//
-//        val request = Request.Builder()
-//            .url("https://api.ai21.com/studio/v1/chat/completions")
-//            .addHeader("Authorization", "Bearer $API_KEY")
-//            .addHeader("Content-Type", "application/json")
-//            .post(payload.toRequestBody("application/json".toMediaType()))
-//            .build()
-//
-//        client.newCall(request).execute().use { resp ->
-//            if (!resp.isSuccessful) throw Exception("AI21 failed: HTTP ${resp.code}")
-//            val body = resp.body!!.string()
-//            val root = Json.parseToJsonElement(body).jsonObject
-//            val choice = root["choices"]!!.jsonArray[0].jsonObject
-//            val message = choice["message"]!!.jsonObject
-//            return@withContext message["content"]!!.jsonPrimitive.content.trim()
-//        }
-//    }
