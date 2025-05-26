@@ -10,14 +10,14 @@ A simple calculator application built with **Jetpack Compose** in **Kotlin**. Th
 - Clear (`C`) and Clear History functionality
 - Custom button placement using `offset`
 
-## Screenshots
-
-![image](https://github.com/user-attachments/assets/02ffe535-2570-4328-a26c-ee6ebec3f98c)
-
-
 ## Tech Stack
 
 - **Kotlin**
 - **Jetpack Compose**
 - **Material 3**
 - **Android Studio**
+
+  
+## Screenshots
+
+![image](https://github.com/user-attachments/assets/02ffe535-2570-4328-a26c-ee6ebec3f98c)
