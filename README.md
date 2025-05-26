@@ -34,7 +34,7 @@ A real-time Bitcoin price tracking application built with **Jetpack Compose** in
      
 ---
 
-##  Challenges Faced
+##  Challenges
 
 - Learning how to **integrate with CoinLayer API** to fetch current BTC prices
 - Understanding **how to retrieve and parse historical price data** from CoinGecko’s REST API
